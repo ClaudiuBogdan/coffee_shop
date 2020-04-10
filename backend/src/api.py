@@ -44,7 +44,8 @@ def get_drinks():
 
 
 @app.route('/drinks-detail')
-def get_drinks_detail():
+@requires_auth('get:drinks-detail')
+def get_drinks_detail(payload):
     """
     @TODO implement endpoint
         GET /drinks-detail
@@ -63,7 +64,8 @@ def get_drinks_detail():
 
 
 @app.route('/drinks', methods=['POST'])
-def create_drink():
+@requires_auth('post:drinks')
+def create_drink(payload):
     """
     @TODO implement endpoint
         POST /drinks
@@ -80,6 +82,11 @@ def create_drink():
 
     recipe = json.dumps(json_data.get('recipe'))
     title = json_data.get('title')
+
+    drink_created = Drink.query.filter_by(title=title).first()
+    if drink_created:
+        abort(422)
+
     drink = Drink(title=title, recipe=recipe)
     drink.insert()
 
@@ -92,7 +99,8 @@ def create_drink():
 
 
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
-def edit_drink(drink_id):
+@requires_auth('patch:drinks')
+def edit_drink(payload, drink_id):
     """
     @TODO implement endpoint
     PATCH /drinks/<id>
@@ -133,7 +141,8 @@ def edit_drink(drink_id):
 
 
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
-def delete_drink(drink_id):
+@requires_auth('delete:drinks')
+def delete_drink(payload, drink_id):
     """
     @TODO implement endpoint
         DELETE /drinks/<id>
@@ -157,6 +166,12 @@ def delete_drink(drink_id):
         "message": "Delete drink successfully.",
         "delete": drink.id
     })
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
+    print(ex.status_code)
+    return jsonify(ex.error), ex.status_code
 
 
 ## Error Handling
